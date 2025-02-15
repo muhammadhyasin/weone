@@ -62,26 +62,38 @@ class _WebViewScreenState extends State<WebViewScreen> {
         },
       ))
       ..enableZoom(true)
-      ..setGeolocationPermissionsPromptCallback(
-        (String origin, GeolocationPermissionsCallback callback) {
-          callback(origin, true, false);
-        },
-      )
       ..addJavaScriptChannel(
         'Flutter',
         onMessageReceived: (JavaScriptMessage message) {
           debugPrint('Message from website: ${message.message}');
         },
       )
-      ..setDOMStorageEnabled(true)
-      ..setDatabaseEnabled(true)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..loadRequest(Uri.parse('https://admin.weoneremovalcompany.uk'));
+
+    _controller.runJavaScript('''
+      navigator.geolocation.getCurrentPosition = function(success, error, options) {
+        success({
+          coords: {
+            latitude: 0,
+            longitude: 0,
+            accuracy: 0,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null
+          },
+          timestamp: Date.now()
+        });
+      };
+    ''');
   }
 
   Future<void> _launchExternalUrl(String url) async {
+    final Uri uri = Uri.parse(url);
     try {
-      if (await canLaunch(url)) {
-        await launch(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
       }
     } catch (e) {
       debugPrint('Error launching URL: $e');
